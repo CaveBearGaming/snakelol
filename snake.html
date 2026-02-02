@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game Deluxe</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+  }
+  canvas {
+    background-color: #111;
+    border: 3px solid #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #0f0;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{x: 10, y: 10}];
+let velocity = {x: 0, y: 0};
+let apple = {x: 15, y: 15};
+let score = 0;
+let gameSpeed = 150; // slower snake (ms per move)
+
+function gameLoop() {
+  update();
+  draw();
+  setTimeout(gameLoop, gameSpeed);
+}
+
+function update() {
+  const head = {x: snake[0].x + velocity.x, y: snake[0].y + velocity.y};
+  snake.unshift(head);
+
+  // Apple collision
+  if (head.x === apple.x && head.y === apple.y) {
+    score++;
+    spawnApple();
+    // Optional: speed up slightly as score increases
+    if (gameSpeed > 60) gameSpeed -= 2;
+  } else {
+    snake.pop();
+  }
+
+  // Wall collision
+  if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+    resetGame();
+  }
+
+  // Self collision
+  for (let i = 1; i < snake.length; i++) {
+    if (head.x === snake[i].x && head.y === snake[i].y) {
+      resetGame();
+    }
+  }
+}
+
+function draw() {
+  // Clear canvas
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw apple
+  ctx.fillStyle = 'red';
+  ctx.beginPath();
+  ctx.arc(apple.x * gridSize + gridSize/2, apple.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI*2);
+  ctx.fill();
+
+  // Draw snake
+  for (let i = 0; i < snake.length; i++) {
+    const part = snake[i];
+    ctx.fillStyle = `hsl(${(i*20)%360}, 80%, 50%)`; // colorful gradient
+    ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+  }
+
+  // Draw score
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px Segoe UI';
+  ctx.fillText('Score: ' + score, 10, 25);
+}
+
+function resetGame() {
+  snake = [{x: 10, y: 10}];
+  velocity = {x: 0, y: 0};
+  score = 0;
+  gameSpeed = 150;
+  spawnApple();
+}
+
+function spawnApple() {
+  apple.x = Math.floor(Math.random() * tileCount);
+  apple.y = Math.floor(Math.random() * tileCount);
+}
+
+// Controls
+document.addEventListener('keydown', e => {
+  switch(e.key) {
+    case 'ArrowUp': if (velocity.y === 0) velocity = {x: 0, y: -1}; break;
+    case 'ArrowDown': if (velocity.y === 0) velocity = {x: 0, y: 1}; break;
+    case 'ArrowLeft': if (velocity.x === 0) velocity = {x: -1, y: 0}; break;
+    case 'ArrowRight': if (velocity.x === 0) velocity = {x: 1, y: 0}; break;
+  }
+});
+
+gameLoop();
+</script>
+</body>
+</html>
